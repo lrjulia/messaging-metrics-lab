@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulador de Carga RabbitMQ</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 2rem;
+            background: #f4f4f9;
+            color: #333;
+        }
+        h2 {
+            color: #444;
+        }
+        button {
+            margin: 0.5rem;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: #4caf50;
+            color: white;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<h2>Simulador de Carga RabbitMQ</h2>
+<button onclick="trigger('high-load')">Alta Carga Constante</button>
+<button onclick="trigger('burst')">Bursts</button>
+<button onclick="trigger('constant')">Carga Moderada</button>
+<button onclick="trigger('variable')">Tamanho Variado</button>
+
+<script>
+    function trigger(type) {
+        fetch('/simulator/' + type, { method: 'POST' })
+            .then(() => alert('Simulação "' + type + '" disparada!'))
+            .catch(err => alert('Erro: ' + err));
+    }
+</script>
+</body>
+</html>
