@@ -1,4 +1,4 @@
-package com.br.rabbitmq_publisher;
+package com.br.publisher;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

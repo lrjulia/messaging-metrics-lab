@@ -50,7 +50,7 @@ services:
 
   publisher:
     build:
-      context: ./rabbitmq-publisher
+      context: ./publisher
     ports:
       - "8081:8080"
     networks:
@@ -58,7 +58,7 @@ services:
     depends_on:
       - rabbitmq
 
-  agent:
+  rabbitmq-agent:
     build:
       context: ./rabbitmq-agent
     ports:

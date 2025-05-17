@@ -1,6 +1,6 @@
-package com.br.rabbitmq_publisher.controller;
+package com.br.publisher.controller;
 
-import com.br.rabbitmq_publisher.model.MessageRequest;
+import com.br.publisher.model.MessageRequest;
 import io.micrometer.core.instrument.Counter;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,11 +19,11 @@ public class RabbitMQController {
     private final Counter messageCounter;
 
     public RabbitMQController(RabbitTemplate rabbitTemplate,
-                              @Value("${app.queue.name}") String queueName,
+                              @Value("${app.rabbitmq.queue}") String queueName,
                               MeterRegistry registry) {
         this.rabbitTemplate = rabbitTemplate;
         this.queueName = queueName;
-        this.messageCounter = registry.counter("messages.sent.total");
+        this.messageCounter = registry.counter("messages.rabbitmq.sent.total");
     }
 
     @PostMapping("/rabbitmq/message")
