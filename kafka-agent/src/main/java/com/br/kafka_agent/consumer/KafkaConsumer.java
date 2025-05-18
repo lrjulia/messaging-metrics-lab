@@ -21,9 +21,9 @@ public class KafkaConsumer {
                 .register(meterRegistry);
     }
 
-    @KafkaListener(topics = "${kafka.topic}", groupId = "${kafka.group-id}")
-    public void receive(ConsumerRecord<String, MessageRequest> record) {
-        MessageRequest message = record.value();
+    @KafkaListener(topics = "${app.kafka.topic}")
+    public void receive(MessageRequest message) {
+//        MessageRequest message = record.value();
         long now = System.currentTimeMillis();
         long latency = now - message.getTimestamp();
         System.out.println("Received: " + message.getContent() + " | Latência: " + latency + " ms");
