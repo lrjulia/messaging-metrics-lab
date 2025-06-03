@@ -10,17 +10,39 @@ scrape_configs:
   - job_name: 'rabbitmq-agent'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['agent:8080']
+      - targets: ['rabbitmq-agent:8080']
         labels:
           rabbitmq_cluster: "dev-cluster"
 
-  - job_name: 'rabbitmq-publisher'
+  - job_name: 'publisher-app'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['publisher:8080']
         labels:
-          rabbitmq_cluster: "dev-cluster"
+          app: "publisher"
+
+  - job_name: 'kafka-exporter'
+    static_configs:
+      - targets: ['kafka-exporter:9308']
+
+  - job_name: 'kafka-agent'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'kafka-agent:8080' ]
+        labels:
+          app: "kafka-agent"
 
   - job_name: 'cadvisor'
     static_configs:
       - targets: [ 'cadvisor:8080' ]
+
+  - job_name: 'sqs-agent'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'sqs-agent:8080' ]
+        labels:
+          app: "sqs-agent"
+
+  - job_name: 'yace-sqs'
+    static_configs:
+      - targets: [ 'yace:5000' ]

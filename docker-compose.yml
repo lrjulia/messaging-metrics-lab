@@ -3,7 +3,7 @@ version: '3.8'
 services:
 
   rabbitmq:
-    image: rabbitmq:3.13.1-alpine
+    image: rabbitmq:3-management
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -11,9 +11,12 @@ services:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
     volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
       - ./setup/setup.sh:/docker-entrypoint-init.d/setup.sh
     networks:
       - monitor-net
+    labels:
+      - "com.docker.compose.service=rabbitmq"
 
   rabbitmq-exporter:
     image: kbudde/rabbitmq-exporter
@@ -26,6 +29,8 @@ services:
       - rabbitmq
     networks:
       - monitor-net
+    labels:
+      - "com.docker.compose.service=rabbitmq-exporter"
 
   zookeeper:
     image: bitnami/zookeeper:latest
@@ -33,6 +38,10 @@ services:
       - ALLOW_ANONYMOUS_LOGIN=yes
     networks:
       - monitor-net
+    volumes:
+      - zookeeper_data:/bitnami/zookeeper
+    labels:
+      - "com.docker.compose.service=zookeeper"
 
   kafka:
     image: bitnami/kafka:3.6
@@ -50,6 +59,10 @@ services:
       - zookeeper
     networks:
       - monitor-net
+    volumes:
+      - kafka_data:/bitnami/kafka
+    labels:
+      - "com.docker.compose.service=kafka"
 
   kafka-exporter:
     image: danielqsj/kafka-exporter:v1.6.0
@@ -57,11 +70,14 @@ services:
       - "9308:9308"
     environment:
       - KAFKA_SERVER=kafka:9092
+      - KAFKA_CONSUMER_GROUP_REGEX=".*"
     depends_on:
       - kafka
     networks:
       - monitor-net
     restart: on-failure
+    labels:
+      - "com.docker.compose.service=kafka-exporter"
 
   prometheus:
     image: prom/prometheus:latest
@@ -71,6 +87,9 @@ services:
       - "9090:9090"
     networks:
       - monitor-net
+    labels:
+      - "com.docker.compose.service=prometheus"
+
 
   grafana:
     image: grafana/grafana-oss:latest
@@ -83,17 +102,25 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    labels:
+      - "com.docker.compose.service=grafana"
 
   publisher:
     build:
       context: ./publisher
     ports:
       - "8081:8080"
+    env_file:
+      - ./publisher/.env
     networks:
       - monitor-net
     depends_on:
       - rabbitmq
       - kafka
+    labels:
+      - "com.docker.compose.service=publisher"
 
   rabbitmq-agent:
     build:
@@ -104,6 +131,8 @@ services:
       - monitor-net
     depends_on:
       - rabbitmq
+    labels:
+      - "com.docker.compose.service=rabbitmq-agent"
 
   kafka-agent:
     build:
@@ -114,19 +143,55 @@ services:
       - monitor-net
     depends_on:
       - kafka
+    labels:
+      - "com.docker.compose.service=kafka-agent"
+
+  sqs-agent:
+    build:
+      context: ./sqs-agent
+    ports:
+      - "8083:8080"
+    networks:
+      - monitor-net
+    env_file:
+      - ./sqs-agent/.env
+    labels:
+      - "com.docker.compose.service=sqs-agent"
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.2
     container_name: cadvisor
     ports:
       - "8089:8080"
+    privileged: true
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /etc/machine-id:/etc/machine-id:ro
+    networks:
+      - monitor-net
+
+  yace:
+    image: ghcr.io/nerdswords/yet-another-cloudwatch-exporter:v0.55.0
+    command:
+      - "--config.file=/tmp/config.yml"
+    volumes:
+      - ./yace-config.yml:/tmp/config.yml
+    env_file:
+      - ./sqs-agent/.env
+    ports:
+      - "5001:5000"
     networks:
       - monitor-net
 
 networks:
   monitor-net:
+
+volumes:
+  zookeeper_data:
+  kafka_data:
+  rabbitmq_data:
+  grafana_data:

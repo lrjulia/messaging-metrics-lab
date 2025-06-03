@@ -1,0 +1,30 @@
+apiVersion: v1alpha1
+
+static:
+  - namespace: AWS/SQS
+    name: sqs-agent-queue
+    regions:
+      - us-east-1
+    dimensions:
+      - name: QueueName
+        value: sqs-agent-queue
+    period_seconds: 60
+    metrics:
+      - name: ApproximateNumberOfMessagesVisible
+        statistics:
+          - Average
+      - name: NumberOfMessagesSent
+        statistics:
+          - Sum
+      - name: NumberOfMessagesDeleted
+        statistics:
+          - Sum
+      - name: NumberOfMessagesReceived
+        statistics:
+          - Sum
+      - name: ApproximateAgeOfOldestMessage
+        statistics:
+          - Maximum
+      - name: SentMessageSize
+        statistics:
+          - Average

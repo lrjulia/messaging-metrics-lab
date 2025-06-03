@@ -11,6 +11,15 @@
         <module name="kafka-agent" />
         <module name="publisher" />
       </profile>
+      <profile name="Annotation profile for sqs-agent" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/unknown/lombok-unknown.jar" />
+        </processorPath>
+        <module name="sqs-agent" />
+      </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
@@ -18,6 +27,7 @@
       <module name="kafka-agent" options="-parameters" />
       <module name="publisher" options="-parameters" />
       <module name="rabbitmq-agent" options="-parameters" />
+      <module name="sqs-agent" options="-parameters" />
     </option>
   </component>
 </project>

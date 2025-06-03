@@ -16,7 +16,6 @@ public class MessageListener {
         this.latencyHistogram = DistributionSummary.builder("rabbitmq_message_latency_ms")
             .publishPercentiles(0.5, 0.95, 0.99)
             .description("Latência das mensagens RabbitMQ em milissegundos")
-            .baseUnit("milliseconds")
             .register(meterRegistry);
     }
 

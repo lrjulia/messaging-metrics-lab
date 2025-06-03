@@ -8,6 +8,7 @@
         <option value="$PROJECT_DIR$/rabbitmq-publisher/pom.xml" />
         <option value="$PROJECT_DIR$/kafka-agent/pom.xml" />
         <option value="$PROJECT_DIR$/publisher/pom.xml" />
+        <option value="$PROJECT_DIR$/sqs-agent/pom.xml" />
       </list>
     </option>
   </component>
