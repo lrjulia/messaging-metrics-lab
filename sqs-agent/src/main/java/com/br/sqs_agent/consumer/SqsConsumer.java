@@ -13,9 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 @Service
 public class SqsConsumer {
@@ -24,6 +22,7 @@ public class SqsConsumer {
     private final ObjectMapper objectMapper;
     private final DistributionSummary latencyHistogram;
     private final Counter deliveredCounter;
+    private final ExecutorService processingExecutor;
 
     @Value("${SQS_URL}")
     private String queueUrl;
@@ -36,36 +35,42 @@ public class SqsConsumer {
                 .description("Latência das mensagens SQS em milissegundos")
                 .register(meterRegistry);
         this.deliveredCounter = meterRegistry.counter("messages.sqs.delivered.total");
+        this.processingExecutor = Executors.newFixedThreadPool(8); // aumenta o paralelismo real
     }
 
     @PostConstruct
     public void startPolling() {
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+        ScheduledExecutorService pollScheduler = Executors.newScheduledThreadPool(4);
         for (int i = 0; i < 4; i++) {
-            executor.scheduleAtFixedRate(this::poll, 0, 200, TimeUnit.MILLISECONDS);
+            pollScheduler.scheduleAtFixedRate(this::pollMessages, 0, 200, TimeUnit.MILLISECONDS);
         }
     }
 
-    private void poll() {
+    private void pollMessages() {
         ReceiveMessageRequest request = new ReceiveMessageRequest()
                 .withQueueUrl(queueUrl)
                 .withMaxNumberOfMessages(10)
-                .withWaitTimeSeconds(10);
+                .withWaitTimeSeconds(10)
+                .withVisibilityTimeout(30); // tempo razoável para evitar redelivery precoce
 
         List<Message> messages = sqsClient.receiveMessage(request).getMessages();
 
         for (Message msg : messages) {
-            try {
-                MessageRequest message = objectMapper.readValue(msg.getBody(), MessageRequest.class);
-                long now = System.currentTimeMillis();
-                long latency = now - message.getTimestamp();
-                latencyHistogram.record(latency);
-                deliveredCounter.increment();
-                sqsClient.deleteMessage(queueUrl, msg.getReceiptHandle());
-                System.out.println("[SQS] Received message: " + msg.getBody());
-            } catch (Exception e) {
-                System.err.println("Failed to process message: " + e.getMessage());
-            }
+            processingExecutor.submit(() -> processMessage(msg));
+        }
+    }
+
+    private void processMessage(Message msg) {
+        try {
+            MessageRequest message = objectMapper.readValue(msg.getBody(), MessageRequest.class);
+            long latency = System.currentTimeMillis() - message.getTimestamp();
+            latencyHistogram.record(latency);
+            deliveredCounter.increment();
+
+            sqsClient.deleteMessage(queueUrl, msg.getReceiptHandle());
+            System.out.println("[SQS] Received message: " + msg.getBody());
+        } catch (Exception e) {
+            System.err.println("[SQS] Failed to process message: " + e.getMessage());
         }
     }
 }
